@@ -1,0 +1,66 @@
+"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Business Insights Assistant</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #response { margin-top: 20px; border: 1px solid #ccc; padding: 15px; white-space: pre-wrap; background-color: #f9f9f9; }
+        textarea { width: 80%; min-height: 80px; }
+        button { padding: 10px 15px; margin-top: 10px;}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <h1>AI Business Insights Assistant</h1>
+    <form id="queryForm">
+        <label for="query">Enter your business query:</label><br>
+        <textarea id="query" name="query" rows="4" required></textarea><br>
+        <button type="submit">Get Insights</button>
+    </form>
+
+    <h2>Response:</h2>
+    <div id="response">Waiting for query...</div>
+    <form id="downloadForm" method="POST" action="/download" style="display: none;">
+         <input type="hidden" name="content" id="downloadContent">
+         <button type="submit">Download Report (.md)</button>
+    </form>
+
+    <script>
+        document.getElementById('queryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const query = document.getElementById('query').value;
+            const responseDiv = document.getElementById('response');
+            const downloadForm = document.getElementById('downloadForm');
+            const downloadContent = document.getElementById('downloadContent');
+
+            responseDiv.innerHTML = "Processing...";
+            downloadForm.style.display = 'none'; // Hide download button
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ query: query })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Render Markdown
+                    responseDiv.innerHTML = marked.parse(data.response || "No content received.");
+                    // Prepare for download
+                    downloadContent.value = data.response || "";
+                    downloadForm.style.display = 'block'; // Show download button
+                } else {
+                    responseDiv.innerText = `Error: ${data.error || 'Unknown error'}`;
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                responseDiv.innerText = `Network or server error: ${error}`;
+            }
+        });
+    </script>
+</body>
+</html>
+"""

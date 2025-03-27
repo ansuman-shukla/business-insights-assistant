@@ -34,7 +34,6 @@ class GeminiClient:
                 response = model.generate_content(
                     prompt,
                     generation_config=generation_config
-                    # Add safety_settings if needed
                 )
                 # Check for valid response content
                 if response.candidates and response.candidates[0].content.parts:

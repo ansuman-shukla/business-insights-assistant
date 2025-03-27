@@ -20,14 +20,23 @@ logger = logging.getLogger(__name__)
 class QueryEngine:
     def __init__(self):
         self.gemini_client = GeminiClient()
-        self.business_profile = { # Load from config or user settings eventually
-            "company_name": "OurCompany",
-            "industry": "Mid-Market SaaS Solutions",
-            "size": "Mid-size Enterprise (300 employees)",
-            "primary_products": ["CRM Platform", "Analytics Dashboard"],
-            "target_customer": "B2B Manufacturing firms",
-            "goals": ["Increase market share by 15% in next 2 years", "Improve customer retention"]
-        }
+        self.business_profile = {
+    "company_name": "Setu",
+    "industry": "Financial Services",
+    "size": "201-500 employees (growth from 51-200 in 2020)[3][5]",
+    "primary_products": [
+        "API solutions for financial onboarding (KYC, Aadhaar/PAN verification)[1][4]", 
+        "Payment infrastructure (BBPS, UPI payment links)",
+        "Account Aggregator services"
+    ],
+    "target_customer": "Fintech companies, banks, and businesses requiring financial infrastructure",
+    "goals": [
+        "Simplify financial integration through APIs",
+        "Enable seamless bill payments and loan repayments at scale",
+        "Promote financial inclusion through open-source initiatives (D91 Labs)"
+    ]
+}
+
 
     def _analyze_query_with_llm(self, query):
         """

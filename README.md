@@ -128,6 +128,11 @@ Launch a local web server to interact with the assistant in a browser.
 ```bash
 python src/backend/app.py
 ```
+
+```bash
+python -m src.backend.app
+```
+
 Then, open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
 
 ---

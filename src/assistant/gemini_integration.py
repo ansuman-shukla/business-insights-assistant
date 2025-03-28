@@ -63,7 +63,7 @@ class GeminiClient:
         return "Error: Max retries exceeded." # Should not be reached if loop logic is correct
 
 
-    def generate_analysis(self, prompt, temperature=0.2, max_output_tokens=4096):
+    def generate_analysis(self, prompt, temperature=0.2, max_output_tokens=8192):
         """Uses the analysis model (Flash) for tasks like routing and entity extraction."""
         generation_config = genai.types.GenerationConfig(
             temperature=temperature, # Lower temp for more deterministic analysis
@@ -88,8 +88,8 @@ class GeminiClient:
             return {"error": raw_response or "No response from analysis model"}
 
 
-    def generate_response(self, prompt, temperature=0.7, max_output_tokens=4096):
-        """Uses the main generative model (Pro) for detailed insights."""
+    def generate_response(self, prompt, temperature=0.7, max_output_tokens=8192):
+        """Uses the main generative model for detailed insights."""
         generation_config = genai.types.GenerationConfig(
             temperature=temperature,
             max_output_tokens=max_output_tokens

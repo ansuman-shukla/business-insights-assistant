@@ -10,6 +10,11 @@
 
 **Strategos** is an AI-powered assistant designed to enhance strategic decision-making for mid-size enterprises. It goes beyond simple LLM wrappers by integrating real-time data augmentation and advanced prompt engineering techniques, ensuring accurate, context-aware, and actionable business insights.
 
+📄 **Example Report(Img):** [Strategos in Action](assets/Screenshot 2025-03-28 184152.png)
+
+📄 **Example Report:** [View Sample Report](assets/business_insights_report.md)
+
+
 ### 🌟 Key Capabilities:
 ✅ **Business Query Understanding** - Determines intent, extracts key entities, and generates relevant search terms.
 ✅ **Real-time Market Insights** - Fetches up-to-date information via web search.

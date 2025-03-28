@@ -1,12 +1,10 @@
 # src/assistant/query_engine.py
 from .gemini_integration import GeminiClient
 from . import prompt_engineering as pe
-from . import utils # Assuming utils might have formatting helpers later
+from . import utils
 import logging
-import time # For potential delays
+import time 
 
-# Import a search library (using duckduckgo_search as example)
-# You MUST install it: pip install -U duckduckgo-search
 try:
     from duckduckgo_search import DDGS
     SEARCH_ENABLED = True

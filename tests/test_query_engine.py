@@ -41,5 +41,3 @@ def test_process_competitive_query(engine):
     assert "Z Inc" in prompt_used
     assert "## Competitive Analysis Analysis" in response # Check basic formatting
     assert "Mocked AI Response" in response
-
-# Add more tests for different query types, error handling etc.

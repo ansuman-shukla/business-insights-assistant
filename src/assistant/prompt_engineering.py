@@ -34,6 +34,8 @@ def get_query_analysis_prompt(query, business_profile):
     The assistant serves a mid-size enterprise with the following profile:
     {profile_str}
 
+    **DATE:** "{datetime.datetime.now().strftime('%Y-%m-%d')}"
+
     **User Query:**
     "{query}"
 

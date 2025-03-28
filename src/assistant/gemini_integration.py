@@ -54,7 +54,6 @@ class GeminiClient:
 
             if attempt < max_retries:
                 logger.info(f"Retrying Gemini call (attempt {attempt + 2}/{max_retries + 1})...")
-                # Optional: Add a small delay before retrying
                 # import time
                 # time.sleep(1)
             else:

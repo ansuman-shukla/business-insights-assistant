@@ -1,43 +1,84 @@
-# Example test (tests/test_query_engine.py)
 import pytest
+from unittest.mock import patch, MagicMock  # Import MagicMock
 from src.assistant.query_engine import QueryEngine
-from unittest.mock import patch # Use patch to mock GeminiClient
 
+# --- Fixture for testing query type detection ---
 @pytest.fixture
-def engine():
-    # Mock GeminiClient within the engine for testing purposes
+def analysis_engine():
     with patch('src.assistant.query_engine.GeminiClient') as MockGeminiClient:
-        # Configure the mock instance if needed, e.g., mock the generate_response method
         mock_instance = MockGeminiClient.return_value
-        mock_instance.generate_response.return_value = "Mocked AI Response"
+        # Define different return values for each call to generate_analysis
+        mock_instance.generate_analysis.side_effect = [
+            # Response for "Compare us to Acme Corp"
+            {"query_type": "competitive_analysis", "entities": {"competitors": ["Acme Corp"]}, "required_searches": []},
+            # Response for "What are future trends in retail?"
+            {"query_type": "trend_forecasting", "entities": {"industry": "retail"}, "required_searches": []},
+            # Response for "Explain market segmentation"
+            {"query_type": "generic", "entities": {}, "required_searches": []}
+        ]
         engine = QueryEngine()
-        engine.gemini_client = mock_instance # Ensure the engine uses the mock
-        yield engine # provide the engine instance to the test
+        engine.gemini_client = mock_instance
+        yield engine
 
-def test_query_type_detection(engine):
+# --- Fixture for testing the full process flow ---
+@pytest.fixture
+def processing_engine():
+     with patch('src.assistant.query_engine.GeminiClient') as MockGeminiClient:
+        mock_instance = MockGeminiClient.return_value
+        # Mock for the analysis step - simulate finding a competitor
+        mock_instance.generate_analysis.return_value = {
+            "query_type": "competitive_analysis",
+            "entities": {"competitors": ["Z Inc"], "original_query": "Analyse competitor Z Inc"},
+            "required_searches": ["search for Z Inc"]
+        }
+        # Mock for the response generation step
+        mock_instance.generate_response.return_value = "Detailed analysis of Z Inc..."
+        
+        # Mock _fetch_realtime_data to return some dummy context
+        with patch('src.assistant.query_engine.QueryEngine._fetch_realtime_data', return_value="Mocked search results for Z Inc."):
+            engine = QueryEngine()
+            engine.gemini_client = mock_instance
+            yield engine
+
+
+def test_analyze_query_with_llm(analysis_engine):
+    """Tests if _analyze_query_with_llm correctly extracts the query type."""
     query_comp = "Compare us to Acme Corp"
     query_trend = "What are future trends in retail?"
     query_generic = "Explain market segmentation"
 
-    type_comp, _ = engine._analyze_query_with_llm(query_comp)
-    type_trend, _ = engine._analyze_query_with_llm(query_trend)
-    type_generic, _ = engine._analyze_query_with_llm(query_generic)
+    # Call _analyze_query_with_llm for each query
+    analysis_comp = analysis_engine._analyze_query_with_llm(query_comp)
+    analysis_trend = analysis_engine._analyze_query_with_llm(query_trend)
+    analysis_generic = analysis_engine._analyze_query_with_llm(query_generic)
 
-    assert type_comp == "competitive_analysis"
-    assert type_trend == "trend_forecasting"
-    assert type_generic == "generic"
+    # Assert based on the 'query_type' key in the returned dictionaries
+    assert analysis_comp.get('query_type') == "competitive_analysis"
+    assert analysis_trend.get('query_type') == "trend_forecasting"
+    assert analysis_generic.get('query_type') == "generic"
 
-def test_process_competitive_query(engine):
+    # Also check that generate_analysis was called 3 times
+    assert analysis_engine.gemini_client.generate_analysis.call_count == 3
+
+def test_process_competitive_query(processing_engine):
+    """Tests the end-to-end process for a competitive analysis query."""
     query = "Analyse competitor Z Inc"
-    response = engine.process_query(query)
+    response = processing_engine.process_query(query)
 
-    # Check that the generate_response method of the mocked client was called
-    engine.gemini_client.generate_response.assert_called_once()
-    # Get the arguments passed to the mock
-    call_args, _ = engine.gemini_client.generate_response.call_args
+    # Check that generate_analysis was called once (by _analyze_query_with_llm)
+    processing_engine.gemini_client.generate_analysis.assert_called_once()
+
+    # Check that generate_response was called once with the correct type of prompt
+    processing_engine.gemini_client.generate_response.assert_called_once()
+    call_args, _ = processing_engine.gemini_client.generate_response.call_args
     prompt_used = call_args[0]
 
-    assert "Conduct a competitive analysis" in prompt_used
-    assert "Z Inc" in prompt_used
-    assert "## Competitive Analysis Analysis" in response # Check basic formatting
-    assert "Mocked AI Response" in response
+    # Assert that the correct prompt components are present
+    assert "Task: Conduct a detailed competitive analysis" in prompt_used
+    assert "Competitors Identified: Z Inc" in prompt_used
+    assert "Mocked search results for Z Inc." in prompt_used # Check context inclusion
+
+    # Check the final formatted response
+    assert "# AI Business Insight Report: Competitive Analysis" in response
+    assert "Detailed analysis of Z Inc..." in response
+    assert "Disclaimer: This report is AI-generated" in response

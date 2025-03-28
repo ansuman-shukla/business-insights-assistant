@@ -19,9 +19,9 @@ def test_query_type_detection(engine):
     query_trend = "What are future trends in retail?"
     query_generic = "Explain market segmentation"
 
-    type_comp, _ = engine.get_query_analysis_prompt(query_comp)
-    type_trend, _ = engine.get_query_analysis_prompt(query_trend)
-    type_generic, _ = engine.get_query_analysis_prompt(query_generic)
+    type_comp, _ = engine._analyze_query_with_llm(query_comp)
+    type_trend, _ = engine._analyze_query_with_llm(query_trend)
+    type_generic, _ = engine._analyze_query_with_llm(query_generic)
 
     assert type_comp == "competitive_analysis"
     assert type_trend == "trend_forecasting"

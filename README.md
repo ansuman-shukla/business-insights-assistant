@@ -10,7 +10,8 @@
 
 **Strategos** is an AI-powered assistant designed to enhance strategic decision-making for mid-size enterprises. It goes beyond simple LLM wrappers by integrating real-time data augmentation and advanced prompt engineering techniques, ensuring accurate, context-aware, and actionable business insights.
 
-📄 **Example Report(Img):** [Strategos in Action](assets/Screenshot 2025-03-28 184152.png)
+![Strategos in Action](assets/strategos_screenshot.png)
+
 
 📄 **Example Report:** [View Sample Report](assets/business_insights_report.md)
 

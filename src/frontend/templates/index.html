@@ -1,65 +1,282 @@
 """
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Business Insights Assistant</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        #response { margin-top: 20px; border: 1px solid #ccc; padding: 15px; white-space: pre-wrap; background-color: #f9f9f9; }
-        textarea { width: 80%; min-height: 80px; }
-        button { padding: 10px 15px; margin-top: 10px;}
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Business Insights Assistant</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* --- Base Styles --- */
+        :root {
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --secondary-color: #6c757d;
+            --light-bg: #f8f9fa;
+            --dark-text: #343a40;
+            --light-text: #ffffff;
+            --border-color: #dee2e6;
+            --response-bg: #e9ecef;
+            --error-color: #dc3545;
+            --spinner-color: var(--primary-color);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top */
+            min-height: 100vh;
+        }
+
+        /* --- Container --- */
+        .container {
+            background-color: var(--light-text);
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            box-sizing: border-box; /* Include padding in width */
+        }
+
+        /* --- Headings --- */
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        h2 {
+            color: var(--dark-text);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            font-weight: 500;
+        }
+
+        /* --- Form Elements --- */
+        #queryForm label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        textarea#query {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            resize: vertical; /* Allow vertical resizing */
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        textarea#query:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        /* --- Buttons --- */
+        button {
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background-color: var(--secondary-color);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        #downloadForm button {
+            background-color: var(--secondary-color); /* Different color for download */
+        }
+         #downloadForm button:hover {
+            background-color: #5a6268;
+        }
+
+
+        /* --- Response Area --- */
+        #response {
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            background-color: var(--response-bg);
+            padding: 20px;
+            border-radius: 5px;
+            min-height: 100px; /* Minimum height */
+            white-space: pre-wrap; /* Keep whitespace formatting */
+            word-wrap: break-word; /* Break long words */
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--dark-text);
+        }
+
+        /* Style for potential code blocks in Markdown */
+        #response pre {
+            background-color: #333;
+            color: #f1f1f1;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto; /* Add scrollbar for long code lines */
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+        }
+         #response code {
+             font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            background-color: rgba(0,0,0,0.05);
+            padding: 2px 4px;
+            border-radius: 3px;
+         }
+        #response pre code { /* Reset background for code inside pre */
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+        }
+
+
+        /* --- Loading Spinner --- */
+        #loadingIndicator {
+            display: none; /* Hidden by default */
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--spinner-color);
+            animation: spin 1s ease infinite;
+            margin: 0 auto; /* Center spinner */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- Error Message --- */
+        .error-message {
+            color: var(--error-color);
+            font-weight: bold;
+        }
+
+    </style>
 </head>
 <body>
-    <h1>AI Business Insights Assistant</h1>
-    <form id="queryForm">
-        <label for="query">Enter your business query:</label><br>
-        <textarea id="query" name="query" rows="4" required></textarea><br>
-        <button type="submit">Get Insights</button>
-    </form>
+    <div class="container">
+        <h1><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>AI Business Insights Assistant</h1>
 
-    <h2>Response:</h2>
-    <div id="response">Waiting for query...</div>
-    <form id="downloadForm" method="POST" action="/download" style="display: none;">
-         <input type="hidden" name="content" id="downloadContent">
-         <button type="submit">Download Report (.md)</button>
-    </form>
+        <form id="queryForm">
+            <label for="query">Enter your business query:</label><br>
+            <textarea id="query" name="query" rows="5" required placeholder="e.g., Analyze sales trends for the last quarter..."></textarea><br>
+            <button type="submit" id="submitButton">Get Insights</button>
+        </form>
+
+        <h2>Response:</h2>
+
+        <div id="loadingIndicator">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: var(--secondary-color);">Processing your request...</p>
+        </div>
+
+        <div id="response" style="display: none;">Waiting for query...</div> <form id="downloadForm" method="POST" action="/download" style="display: none;">
+              <input type="hidden" name="content" id="downloadContent">
+              <button type="submit">Download Report (.md)</button>
+        </form>
+    </div>
 
     <script>
-        document.getElementById('queryForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const query = document.getElementById('query').value;
-            const responseDiv = document.getElementById('response');
-            const downloadForm = document.getElementById('downloadForm');
-            const downloadContent = document.getElementById('downloadContent');
+        const queryForm = document.getElementById('queryForm');
+        const queryInput = document.getElementById('query');
+        const submitButton = document.getElementById('submitButton');
+        const responseDiv = document.getElementById('response');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const downloadForm = document.getElementById('downloadForm');
+        const downloadContent = document.getElementById('downloadContent');
 
-            responseDiv.innerHTML = "Processing...";
+        queryForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const query = queryInput.value.trim();
+            if (!query) return; // Don't submit if query is empty
+
+            // --- Update UI for Loading State ---
+            submitButton.disabled = true;      // Disable button
+            responseDiv.style.display = 'none'; // Hide previous response
+            responseDiv.innerHTML = '';         // Clear previous response content
+            loadingIndicator.style.display = 'block'; // Show spinner
             downloadForm.style.display = 'none'; // Hide download button
 
             try {
                 const response = await fetch('/ask', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Accept': 'application/json' // Indicate we expect JSON
+                    },
                     body: new URLSearchParams({ query: query })
                 });
 
+                // Attempt to parse JSON regardless of response.ok to get error details
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Render Markdown
-                    responseDiv.innerHTML = marked.parse(data.response || "No content received.");
+                    // Render Markdown using marked.js
+                    const markdownResponse = data.response || "No content received.";
+                    responseDiv.innerHTML = marked.parse(markdownResponse);
+
                     // Prepare for download
-                    downloadContent.value = data.response || "";
+                    downloadContent.value = markdownResponse; // Store raw Markdown for download
                     downloadForm.style.display = 'block'; // Show download button
+
                 } else {
-                    responseDiv.innerText = `Error: ${data.error || 'Unknown error'}`;
+                    // Display error from server response
+                    responseDiv.innerHTML = `<span class="error-message">Error: ${data.error || response.statusText || 'Unknown server error'}</span>`;
                 }
+
             } catch (error) {
-                console.error("Fetch error:", error);
-                responseDiv.innerText = `Network or server error: ${error}`;
+                console.error("Fetch or processing error:", error);
+                // Display network or parsing error
+                 responseDiv.innerHTML = `<span class="error-message">Network or Server Error: ${error.message || 'Failed to fetch response.'} Check console for details.</span>`;
+
+            } finally {
+                // --- Restore UI after Processing ---
+                loadingIndicator.style.display = 'none'; // Hide spinner
+                responseDiv.style.display = 'block';    // Show response area (with content or error)
+                submitButton.disabled = false;         // Re-enable button
             }
         });
+
+         // Initial state message
+         // responseDiv.innerHTML = 'Enter a query above and click "Get Insights".';
+         // responseDiv.style.display = 'block'; // Show initial message
+
     </script>
 </body>
 </html>

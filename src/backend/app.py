@@ -1,6 +1,6 @@
 # src/backend/app.py
 from flask import Flask, request, render_template, jsonify, Response
-from src.assistant.query_engine import QueryEngine
+from ..assistant.query_engine import QueryEngine
 import logging
 import os
 

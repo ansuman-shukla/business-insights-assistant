@@ -1,13 +1,30 @@
-
-import json 
+import json
+import datetime
 
 # --- Base Prompt Elements ---
-BASE_PERSONA = """You are 'Strategos', an advanced AI Business Insights Assistant specialized in providing strategic analysis and actionable recommendations for mid-size enterprises (approx. 200-1000 employees). Your analysis must be deep, context-aware, data-informed (using provided search results), and clearly structured. Assume the user is a decision-maker (CEO, Director, Head of Department) looking for practical insights, not just generic information. Use Markdown extensively for formatting (headings, lists, tables, bold text)."""
+
+# RENAMED and REMOVED date - this is now a static template
+BASE_PERSONA_TEMPLATE = """You are 'Strategos', an advanced AI Business Insights Assistant specialized in providing strategic analysis and actionable recommendations for mid-size enterprises (approx. 200-1000 employees). Your analysis must be deep, context-aware, data-informed (using provided search results), and clearly structured. Assume the user is a decision-maker (CEO, Director, Head of Department) looking for practical insights, not just generic information. Use Markdown extensively for formatting (headings, lists, tables, bold text)."""
 
 # Adjusted to be more flexible - tables are good, but allow other formats if better.
 OUTPUT_FORMAT_REQUIREMENT = """Structure your response logically as a business report. Use clear headings for each section. Use Markdown for clarity (e.g., tables for direct comparisons where suitable, lists, bold text). Conclude with a dedicated 'Actionable Recommendations' section, suggesting concrete next steps, potential KPIs to track, and considerations for implementation within a mid-size company context."""
 
-# --- NEW: Prompt for Query Analysis (for Gemini Flash) ---
+# --- NEW: Helper function to generate the dynamic header ---
+def _get_dynamic_prompt_header() -> str:
+    """
+    Generates the initial part of the prompt including the base persona
+    and the CURRENT date. Call this at the start of prompt generation functions.
+    """
+    current_date_str = datetime.datetime.now().strftime('%Y-%m-%d')
+    # Embed the current date into the persona string dynamically
+    # Adds the date information right before the final sentence for smoother flow.
+    dynamic_persona = BASE_PERSONA_TEMPLATE.replace(
+        "formatting (headings, lists, tables, bold text).",
+        f"formatting (headings, lists, tables, bold text). CURRENT DATE IS: {current_date_str}."
+    )
+    return dynamic_persona + "\n\n" # Add spacing for the rest of the prompt
+
+# --- Prompt for Query Analysis (Unaffected by Base Persona Date) ---
 def get_query_analysis_prompt(query, business_profile):
     profile_str = json.dumps(business_profile, indent=2) # Format profile for clarity in prompt
     prompt = f"""Analyze the following user query submitted to an AI Business Insights Assistant.
@@ -60,7 +77,7 @@ def get_query_analysis_prompt(query, business_profile):
     Important: Generate ONLY the JSON object as your response. Do not include explanations or introductions. Ensure the JSON is valid."""
     return prompt
 
-# --- UPDATED: Detailed Prompt Templates ---
+# --- UPDATED: Detailed Prompt Templates (Using Dynamic Header) ---
 def get_detailed_competitive_analysis_prompt(
         business_profile,
         entities,
@@ -71,7 +88,10 @@ def get_detailed_competitive_analysis_prompt(
     focus_areas = entities.get('focus_areas', ['Overall Strategy', 'Products/Services', 'Pricing', 'Market Positioning', 'Strengths', 'Weaknesses'])
     profile_str = f"Our Company: '{business_profile['company_name']}', Industry: '{business_profile['industry']}', Size: '{business_profile['size']}', Core Products: {', '.join(business_profile['primary_products'])}"
 
-    prompt = f"{BASE_PERSONA}\n\n"
+    # --- Use the dynamic header function ---
+    prompt = _get_dynamic_prompt_header()
+    # --- End dynamic header usage ---
+
     prompt += f"**Task:** Conduct a detailed competitive analysis based on the user query and recent information.\n"
     prompt += f"**User Query:** \"{original_query}\"\n"
     prompt += f"**Our Business Profile:** {profile_str}\n"
@@ -85,23 +105,23 @@ def get_detailed_competitive_analysis_prompt(
     prompt += "1.  **Executive Summary:** Start with a brief overview of the key findings and most critical strategic takeaways for OurCompany.\n"
     prompt += "2.  **Methodology:** Briefly state that the analysis is based on publicly available information, the provided search context, and general industry knowledge.\n"
     prompt += "3.  **Competitor Profiles:** For each identified competitor (and OurCompany), provide a concise profile covering:\n"
-    prompt += "     * Key Offerings & Target Market\n"
-    prompt += "     * Recent News/Developments (referencing search context where applicable)\n"
-    prompt += "     * Perceived Strengths\n"
-    prompt += "     * Perceived Weaknesses\n"
+    prompt += "    * Key Offerings & Target Market\n"
+    prompt += "    * Recent News/Developments (referencing search context where applicable)\n"
+    prompt += "    * Perceived Strengths\n"
+    prompt += "    * Perceived Weaknesses\n"
     prompt += "4.  **Comparative Analysis (Condensed Paragraph Format):** For each of the specified `focus_areas`, write a paragraph comparing OurCompany and the key competitors. Synthesize information from the search context and general knowledge. Analyze factors within these paragraphs such as:\n"
-    prompt += "     * Product Features & Innovation Pace\n"
-    prompt += "     * Pricing Tiers & Value Proposition\n"
-    prompt += "     * Go-to-Market Strategy (Sales channels, Marketing approach)\n"
-    prompt += "     * Customer Reviews & Brand Perception (cite search context if reviews were found)\n"
-    prompt += "     * Estimated Market Share / Position (if discernible)\n"
-    prompt += "5.  **SWOT Analysis (Derived):** Based *specifically* on the comparison above, generate a SWOT analysis (Strengths, Weaknesses, Opportunities, Threats) for OurCompany relative to these competitors.\n"
+    prompt += "    * Product Features & Innovation Pace\n"
+    prompt += "    * Pricing Tiers & Value Proposition\n"
+    prompt += "    * Go-to-Market Strategy (Sales channels, Marketing approach)\n"
+    prompt += "    * Customer Reviews & Brand Perception (cite search context if reviews were found)\n"
+    prompt += "    * Estimated Market Share / Position (if discernible)\n"
+    prompt += "5.  **SWOT Analysis (Derived):** Based *specifically* on the comparison above, generate a SWOT analysis (Strengths, Weaknesses, Opportunities, Threats) for OurCompany relative to these competitors.\n"
     prompt += "6.  **Strategic Differentiators & Actionable Recommendations:** This is the most critical section. Provide concrete, actionable recommendations for OurCompany. Focus on:\n"
-    prompt += "     * How to leverage strengths and mitigate weaknesses.\n"
-    prompt += "     * How to capitalize on opportunities and defend against threats.\n"
-    prompt += "     * Suggest specific strategic differentiators (e.g., focus on a niche, enhance a specific feature, improve support, adjust pricing, form partnerships).\n"
-    prompt += "     * Consider feasibility for a mid-size enterprise (resource constraints).\n"
-    prompt += "     * Suggest 1-2 key metrics (KPIs) to track progress if these recommendations are implemented.\n\n"
+    prompt += "    * How to leverage strengths and mitigate weaknesses.\n"
+    prompt += "    * How to capitalize on opportunities and defend against threats.\n"
+    prompt += "    * Suggest specific strategic differentiators (e.g., focus on a niche, enhance a specific feature, improve support, adjust pricing, form partnerships).\n"
+    prompt += "    * Consider feasibility for a mid-size enterprise (resource constraints).\n"
+    prompt += "    * Suggest 1-2 key metrics (KPIs) to track progress if these recommendations are implemented.\n\n"
 
     prompt += f"{OUTPUT_FORMAT_REQUIREMENT}\n"
     return prompt
@@ -117,7 +137,10 @@ def get_detailed_trend_forecasting_prompt(
     focus_areas = entities.get('focus_areas', ['Technology', 'Market Dynamics', 'Customer Behavior', 'Regulatory Changes'])
     profile_str = f"Our Company: '{business_profile['company_name']}', Industry: '{industry}', Size: '{business_profile['size']}'"
 
-    prompt = f"{BASE_PERSONA}\n\n"
+    # --- Use the dynamic header function ---
+    prompt = _get_dynamic_prompt_header()
+    # --- End dynamic header usage ---
+
     prompt += f"**Task:** Provide a detailed trend analysis and forecast for the specified industry, focusing on implications for a mid-size enterprise.\n"
     prompt += f"**User Query:** \"{original_query}\"\n"
     prompt += f"**Our Business Profile Context:** {profile_str}\n"
@@ -132,28 +155,31 @@ def get_detailed_trend_forecasting_prompt(
     prompt += "1.  **Executive Summary:** Briefly summarize the most impactful trends identified and the overall strategic outlook for a mid-size player in this industry over the time horizon.\n"
     prompt += "2.  **Methodology:** State that the analysis uses recent public data (including provided search context), general industry knowledge, and forecasting principles.\n"
     prompt += "3.  **Key Trend Analysis:** For each major trend identified (use the `focus_areas` and search context as guides), provide:\n"
-    prompt += "     * **Trend Description:** Clearly define the trend.\n"
-    prompt += "     * **Evidence/Signals:** Mention supporting data points (from search context or general knowledge).\n"
-    prompt += "     * **Impact Analysis:** Analyze the potential positive and negative impacts specifically on a *mid-size enterprise* like OurCompany within this industry. Consider resource constraints and agility.\n"
-    prompt += "     * **Forecast & Likelihood:** Briefly forecast the trend's likely evolution over the specified `time_horizon`. You can optionally add a qualitative likelihood (e.g., High, Medium, Low).\n"
-    prompt += "     * **Categorization (Optional but helpful):** Tag the trend (e.g., Technology, Market, Social, Regulatory/Legal, Environmental).\n"
+    prompt += "    * **Trend Description:** Clearly define the trend.\n"
+    prompt += "    * **Evidence/Signals:** Mention supporting data points (from search context or general knowledge).\n"
+    prompt += "    * **Impact Analysis:** Analyze the potential positive and negative impacts specifically on a *mid-size enterprise* like OurCompany within this industry. Consider resource constraints and agility.\n"
+    prompt += "    * **Forecast & Likelihood:** Briefly forecast the trend's likely evolution over the specified `time_horizon`. You can optionally add a qualitative likelihood (e.g., High, Medium, Low).\n"
+    prompt += "    * **Categorization (Optional but helpful):** Tag the trend (e.g., Technology, Market, Social, Regulatory/Legal, Environmental).\n"
     prompt += "4.  **Cross-Trend Synergies/Conflicts:** Briefly discuss any notable interactions between the identified trends.\n"
     prompt += "5.  **Strategic Implications & Actionable Recommendations:** Provide concrete, prioritized recommendations for OurCompany:\n"
-    prompt += "     * How to leverage opportunities presented by trends.\n"
-    prompt += "     * How to mitigate risks posed by trends.\n"
-    prompt += "     * Suggest specific initiatives (e.g., technology adoption, market repositioning, partnership strategies, talent development).\n"
-    prompt += "     * Frame recommendations considering mid-size company resources (avoid suggesting massive R&D unless critical).\n"
-    prompt += "     * Recommend 1-2 KPIs per major recommendation area to track adaptation and success.\n\n"
+    prompt += "    * How to leverage opportunities presented by trends.\n"
+    prompt += "    * How to mitigate risks posed by trends.\n"
+    prompt += "    * Suggest specific initiatives (e.g., technology adoption, market repositioning, partnership strategies, talent development).\n"
+    prompt += "    * Frame recommendations considering mid-size company resources (avoid suggesting massive R&D unless critical).\n"
+    prompt += "    * Recommend 1-2 KPIs per major recommendation area to track adaptation and success.\n\n"
 
     prompt += f"{OUTPUT_FORMAT_REQUIREMENT}\n"
     return prompt
 
 def get_detailed_swot_analysis_prompt(business_profile, entities, search_context, original_query):
-# SWOT often needs context, potentially from competitors or market position
+    # SWOT often needs context, potentially from competitors or market position
     profile_str = f"Our Company: '{business_profile['company_name']}', Industry: '{business_profile['industry']}', Size: '{business_profile['size']}', Core Products: {', '.join(business_profile['primary_products'])}"
     focus = entities.get('focus_areas', ["overall business"]) # What aspect to SWOT?
 
-    prompt = f"{BASE_PERSONA}\n\n"
+    # --- Use the dynamic header function ---
+    prompt = _get_dynamic_prompt_header()
+    # --- End dynamic header usage ---
+
     prompt += f"**Task:** Conduct a detailed SWOT analysis (Strengths, Weaknesses, Opportunities, Threats) for OurCompany.\n"
     prompt += f"**User Query:** \"{original_query}\"\n"
     prompt += f"**Our Business Profile:** {profile_str}\n"
@@ -166,26 +192,36 @@ def get_detailed_swot_analysis_prompt(business_profile, entities, search_context
     prompt += "1.  **Introduction:** Briefly state the purpose of the SWOT analysis for OurCompany focusing on the specified area.\n"
     prompt += "2.  **Methodology:** Mention reliance on the business profile, provided search context (if any), and general industry understanding.\n"
     prompt += "3.  **Internal Analysis:**\n"
-    prompt += "     * **Strengths:** Identify internal capabilities, resources, and advantages relative to the market/competitors. Be specific (e.g., 'Proprietary algorithm', 'Strong regional presence', 'Experienced engineering team'). List at least 3-5 key strengths.\n"
-    prompt += "     * **Weaknesses:** Identify internal limitations, resource gaps, or disadvantages. Be honest and specific (e.g., 'Limited marketing budget', 'Dependency on single supplier', 'Aging technology stack'). List at least 3-5 key weaknesses.\n"
+    prompt += "    * **Strengths:** Identify internal capabilities, resources, and advantages relative to the market/competitors. Be specific (e.g., 'Proprietary algorithm', 'Strong regional presence', 'Experienced engineering team'). List at least 3-5 key strengths.\n"
+    prompt += "    * **Weaknesses:** Identify internal limitations, resource gaps, or disadvantages. Be honest and specific (e.g., 'Limited marketing budget', 'Dependency on single supplier', 'Aging technology stack'). List at least 3-5 key weaknesses.\n"
+    # Note: Duplicate Weaknesses line removed from original
     prompt += "4.  **External Analysis:**\n"
-    prompt += "     * **Opportunities:** Identify external factors or trends (use search context) that OurCompany could potentially leverage for growth or advantage (e.g., 'Growing demand in adjacent market', 'Competitor product recall', 'New favorable regulation', 'Emerging technology partnership'). List at least 3-5 key opportunities.\n"
-    prompt += "     * **Threats:** Identify external factors or trends that could negatively impact OurCompany (e.g., 'New entrant with lower pricing', 'Changing customer preferences', 'Economic downturn impacting client budgets', 'Potential cybersecurity risks'). List at least 3-5 key threats.\n"
+    prompt += "    * **Opportunities:** Identify external factors or trends (use search context) that OurCompany could potentially leverage for growth or advantage (e.g., 'Growing demand in adjacent market', 'Competitor product recall', 'New favorable regulation', 'Emerging technology partnership'). List at least 3-5 key opportunities.\n"
+    prompt += "    * **Threats:** Identify external factors or trends that could negatively impact OurCompany (e.g., 'New entrant with lower pricing', 'Changing customer preferences', 'Economic downturn impacting client budgets', 'Potential cybersecurity risks'). List at least 3-5 key threats.\n"
     prompt += "5.  **SWOT Matrix Summary:** Present the findings clearly, perhaps using Markdown lists under each heading (S, W, O, T).\n"
     prompt += "6.  **Strategic Implications & Actionable Recommendations:** This is crucial. Analyze the interactions within the SWOT matrix (TOWS analysis approach can be useful mentally):\n"
-    prompt += "     * **SO Strategies (Strength-Opportunity):** How to use strengths to exploit opportunities?\n"
-    prompt += "     * **WO Strategies (Weakness-Opportunity):** How to overcome weaknesses by taking advantage of opportunities?\n"
-    prompt += "     * **ST Strategies (Strength-Threat):** How to use strengths to avoid or mitigate threats?\n"
-    prompt += "     * **WT Strategies (Weakness-Threat):** What defensive actions are needed to prevent weaknesses from making the company vulnerable to threats?\n"
-    prompt += "     * Provide 3-5 prioritized, actionable recommendations based on these strategic implications, suitable for a mid-size enterprise.\n\n"
+    prompt += "    * **SO Strategies (Strength-Opportunity):** How to use strengths to exploit opportunities?\n"
+    prompt += "    * **WO Strategies (Weakness-Opportunity):** How to overcome weaknesses by taking advantage of opportunities?\n"
+    prompt += "    * **ST Strategies (Strength-Threat):** How to use strengths to avoid or mitigate threats?\n"
+    prompt += "    * **WT Strategies (Weakness-Threat):** What defensive actions are needed to prevent weaknesses from making the company vulnerable to threats?\n"
+    prompt += "    * Provide 3-5 prioritized, actionable recommendations based on these strategic implications, suitable for a mid-size enterprise.\n\n"
 
     prompt += f"{OUTPUT_FORMAT_REQUIREMENT}\n"
     return prompt
 
-def get_detailed_generic_query_prompt(business_profile, entities, search_context, original_query):
+# --- NEWLY ADDED FUNCTION ---
+def get_detailed_generic_query_prompt(
+        business_profile,
+        entities,
+        search_context,
+        original_query):
+
     profile_str = f"Our Company: '{business_profile['company_name']}', Industry: '{business_profile['industry']}', Size: '{business_profile['size']}'"
 
-    prompt = f"{BASE_PERSONA}\n\n"
+    # --- Use the dynamic header function ---
+    prompt = _get_dynamic_prompt_header()
+    # --- End dynamic header usage ---
+
     prompt += f"**Task:** Address the following business query comprehensively, providing insights relevant to a mid-size enterprise.\n"
     prompt += f"**User Query:** \"{original_query}\"\n"
     prompt += f"**Our Business Profile Context:** {profile_str}\n\n"
@@ -204,3 +240,80 @@ def get_detailed_generic_query_prompt(business_profile, entities, search_context
 
     prompt += f"{OUTPUT_FORMAT_REQUIREMENT}\n"
     return prompt
+# --- END NEWLY ADDED FUNCTION ---
+
+
+# # --- Example Usage (Conceptual) ---
+# if __name__ == '__main__':
+#     # Example data (replace with actual data retrieval)
+#     sample_business_profile = {
+#         "company_name": "OurCompany Inc.",
+#         "industry": "Cloud-based CRM Solutions",
+#         "size": "Mid-size (350 employees)",
+#         "primary_products": ["Core CRM Suite", "Sales Analytics Module"]
+#     }
+#     sample_entities = {
+#         'competitors': ['Salesforce', 'HubSpot'],
+#         'focus_areas': ['Pricing', 'Feature Set', 'Integration Capabilities'],
+#         'industry': 'Cloud-based CRM Solutions',
+#         'original_query': "How does OurCompany CRM compare to Salesforce and HubSpot on pricing, features, and integrations?"
+#         # ... other entities extracted by query analysis
+#     }
+#     sample_search_context = """
+#     - Search Result 1: Recent article highlights HubSpot's new free tier attracting SMBs.
+#     - Search Result 2: Salesforce announces AI-driven enhancements to its Sales Cloud (Q1 2025).
+#     - Search Result 3: G2 Crowd reviews mention OurCompany's ease of use but weaker integration options compared to leaders.
+#     """
+#     sample_original_query = sample_entities['original_query'] # Use entity value
+
+#     # Generate a prompt dynamically - the date will be calculated NOW
+#     competitive_prompt = get_detailed_competitive_analysis_prompt(
+#         sample_business_profile,
+#         sample_entities,
+#         sample_search_context,
+#         sample_original_query
+#     )
+
+#     print("--- Example Generated Prompt (Competitive Analysis) ---")
+#     print(competitive_prompt)
+#     print("-" * 50)
+
+#     # Example for Trend Forecasting
+#     trend_entities = {
+#         'industry': 'Cloud Computing Services',
+#         'time_horizon': 'next 2 years',
+#         'focus_areas': ['AI/ML integration', 'Serverless adoption', 'Edge computing'],
+#         'original_query': 'What are the key cloud computing trends for the next 2 years?'
+#     }
+#     trend_context = """
+#     - Search Result 1: Report shows serverless compute usage grew 40% YoY.
+#     - Search Result 2: Major cloud providers investing heavily in integrated AI/ML platforms.
+#     """
+#     trend_prompt = get_detailed_trend_forecasting_prompt(
+#         sample_business_profile, # Using same profile for example
+#         trend_entities,
+#         trend_context,
+#         trend_entities['original_query']
+#     )
+#     print("\n--- Example Generated Prompt (Trend Forecasting) ---")
+#     print(trend_prompt)
+#     print("-" * 50)
+
+#     # Example for Generic Query (USING NEW FUNCTION)
+#     generic_entities = {
+#          'original_query': 'What are the pros and cons of adopting a subscription model for our CRM?'
+#          # Add other relevant entities if the analysis found any
+#     }
+#     generic_context = """
+#     - Search Result 1: Article discusses increasing ARR predictability with subscriptions.
+#     - Search Result 2: Forum thread mentions potential customer churn if migration isn't handled well.
+#     """
+#     generic_prompt = get_detailed_generic_query_prompt(
+#          sample_business_profile, # Using same profile for example
+#          generic_entities,
+#          generic_context,
+#          generic_entities['original_query']
+#     )
+#     print("\n--- Example Generated Prompt (Generic Query) ---")
+#     print(generic_prompt)
+#     print("-" * 50)

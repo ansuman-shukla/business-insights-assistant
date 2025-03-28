@@ -1,5 +1,7 @@
+# src/tests/test_query_engine.py
+
 import pytest
-from unittest.mock import patch, MagicMock  # Import MagicMock
+from unittest.mock import patch, MagicMock
 from src.assistant.query_engine import QueryEngine
 
 # --- Fixture for testing query type detection ---
@@ -74,7 +76,9 @@ def test_process_competitive_query(processing_engine):
     prompt_used = call_args[0]
 
     # Assert that the correct prompt components are present
-    assert "Task: Conduct a detailed competitive analysis" in prompt_used
+    # --- FIX: Added markdown asterisks here ---
+    assert "**Task:** Conduct a detailed competitive analysis" in prompt_used
+    # --- End of FIX ---
     assert "Competitors Identified: Z Inc" in prompt_used
     assert "Mocked search results for Z Inc." in prompt_used # Check context inclusion
 

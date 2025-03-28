@@ -129,6 +129,8 @@ Launch a local web server to interact with the assistant in a browser.
 python src/backend/app.py
 ```
 
+or 
+
 ```bash
 python -m src.backend.app
 ```

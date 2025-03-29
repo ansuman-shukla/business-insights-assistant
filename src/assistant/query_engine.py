@@ -138,9 +138,11 @@ class QueryEngine:
             prompt = pe.get_detailed_trend_forecasting_prompt(**prompt_context)
         elif query_type == "swot_analysis":
              prompt = pe.get_detailed_swot_analysis_prompt(**prompt_context)
-        # Add elif blocks for marketing, finance, ops etc.
-        # elif query_type == "marketing_strategy":
-        #     prompt = pe.get_detailed_marketing_strategy_prompt(**prompt_context)
+        elif query_type == "marketing_strategy":  # <-- Add new type
+            prompt = pe.get_detailed_marketing_strategy_prompt(**prompt_context)
+        elif query_type == "financial_analysis": # <-- Add new type
+            prompt = pe.get_detailed_financial_analysis_prompt(**prompt_context)
+
         else: # Generic query
             prompt = pe.get_detailed_generic_query_prompt(**prompt_context)
 
